@@ -1,0 +1,59 @@
+{
+    "configurations": [
+        
+    {
+        "name": "(gdb) Attach",
+        "type": "cppdbg",
+        "request": "attach",
+        "program": "enter program name, for example ${workspaceFolder}/a.exe",
+        "MIMode": "gdb",
+        "miDebuggerPath": "/path/to/gdb",
+        "setupCommands": [
+            {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+            },
+            {
+                "description": "Set Disassembly Flavor to Intel",
+                "text": "-gdb-set disassembly-flavor intel",
+                "ignoreFailures": true
+            }
+        ]
+    }
+    ]
+}#include <iostream>
+#include <thread>
+#include <vector>
+#include <numeric>
+#include <chrono>
+
+void sumarRango(const std::vector<int>& datos, int inicio, int fin, long long& resultado) {
+    resultado = std::accumulate(datos.begin() + inicio, datos.begin() + fin, 0LL);
+}
+
+int main() {
+    std::vector<int> numeros(100000000); // 100 millones
+    std::iota(numeros.begin(), numeros.end(), 1); // llena con 1, 2, 3, ..., 100000000
+
+    long long suma1 = 0, suma2 = 0;
+    int mitad = numeros.size() / 2;
+
+    auto inicio = std::chrono::high_resolution_clock::now();
+
+    std::thread hilo1(sumarRango, std::ref(numeros), 0, mitad, std::ref(suma1));
+    std::thread hilo2(sumarRango, std::ref(numeros), mitad, numeros.size(), std::ref(suma2));
+
+    hilo1.join();
+    hilo2.join();
+
+    long long sumaTotal = suma1 + suma2;
+
+    auto fin = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duracion = fin - inicio;
+
+    std::cout << "Suma total (2 hilos): " << sumaTotal << std::endl;
+    std::cout << "Tiempo (2 hilos): " << duracion.count() << " segundos" << std::endl;
+
+    return 0;
+}
